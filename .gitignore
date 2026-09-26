@@ -1,0 +1,22 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# Data (keep the folder, not the big files)
+data/*
+!data/sample/
+data/sample/*.csv
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
