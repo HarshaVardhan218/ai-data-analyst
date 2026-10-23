@@ -1,0 +1,9 @@
+customer_id,name,email,signup_date,country,lifetime_value
+1,Alice Johnson,alice@example.com,2024-01-15,UK,1250.50
+2,Bob Smith,bob@example.com,2024-02-20,USA,890.00
+3,Carla Diaz,carla@example.com,2024-03-05,Spain,
+4,David Lee,david@example.com,2024-03-05,UK,430.75
+5,Eve Martin,eve@example.com,,France,2100.00
+6,Frank Wu,,2024-05-11,USA,75.20
+7,Alice Johnson,alice@example.com,2024-01-15,UK,1250.50
+8,Grace Kim,grace@example.com,2024-06-30,Korea,560.00

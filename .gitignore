@@ -20,3 +20,6 @@ data/sample/*.csv
 .DS_Store
 .idea/
 .vscode/
+
+# Exception: keep small hand-made test fixtures
+!data/sample/customers_test.csv
