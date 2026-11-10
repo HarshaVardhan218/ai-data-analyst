@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Data Analyst</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="12" width="4" height="9" rx="1.5"></rect>
+        <rect x="10" y="7" width="4" height="14" rx="1.5"></rect>
+        <rect x="17" y="3" width="4" height="18" rx="1.5"></rect>
+      </svg>
+      <span>AI Data Analyst</span>
+    </div>
+    <div class="topbar-right">
+      <span id="health" class="health" role="status">Checking…</span>
+      <a class="ghost-link" href="/docs" target="_blank" rel="noopener">API docs</a>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <section class="panel">
+        <h2>Upload a CSV</h2>
+        <label id="dropzone" class="dropzone" for="file-input">
+          <input id="file-input" type="file" accept=".csv,text/csv" hidden>
+          <span class="dropzone-title">Drop a CSV here</span>
+          <span class="dropzone-sub">or click to choose a file (max 50 MB)</span>
+        </label>
+        <p id="upload-status" class="status-line" role="status"></p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Datasets</h2>
+          <span id="dataset-count" class="count"></span>
+        </div>
+        <p class="hint">Tick datasets to limit questions to them. None ticked = all.</p>
+        <ul id="dataset-list" class="dataset-list"></ul>
+      </section>
+    </aside>
+
+    <section class="main">
+      <form id="ask-form" class="ask-box">
+        <label for="question" class="visually-hidden">Ask a question about your data</label>
+        <textarea id="question" rows="2" placeholder="Ask a question about your data, e.g. Which country has the highest total lifetime value?" required maxlength="2000"></textarea>
+        <div class="ask-row">
+          <span id="scope" class="scope"></span>
+          <button id="ask-button" type="submit" class="primary">Ask</button>
+        </div>
+        <div id="suggestions" class="suggestions"></div>
+      </form>
+
+      <div id="answers" class="answers" aria-live="polite"></div>
+
+      <div id="empty-state" class="empty-state">
+        <h2>Ask anything about your data</h2>
+        <p>Upload a CSV on the left, then ask a question in plain English. The agent writes SQL,
+          runs it read-only against your data, and answers with a chart and the exact query it used.</p>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="dataset-dialog" class="dialog">
+    <div class="dialog-head">
+      <div>
+        <h2 id="dialog-title"></h2>
+        <p id="dialog-sub" class="muted"></p>
+      </div>
+      <button type="button" class="icon-button" data-close aria-label="Close">✕</button>
+    </div>
+    <div class="table-wrap">
+      <table id="profile-table" class="data-table"></table>
+    </div>
+  </dialog>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

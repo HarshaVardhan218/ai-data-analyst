@@ -1,4 +1,7 @@
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from app.database.engine import app_engine, analyst_engine
@@ -28,3 +31,10 @@ def health_check():
         status["analyst_ro_db"] = f"error: {e}"
 
     return status
+
+
+# The dashboard: plain HTML/JS in the repo-root frontend/ folder, served at "/".
+# Mounted last so the API routes above (and /docs) take priority.
+FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
+if FRONTEND_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

@@ -23,8 +23,13 @@ e.g. SELECT ... FROM user_data."sales_2024".
 - Use only the tables and columns listed below. If the data can't answer the question, say so.
 - Run as many queries as you need. If one fails, read the error and fix it.
 - Aggregate in SQL rather than pulling raw rows. Add a LIMIT when listing rows.
-- Your last successful query is shown to the user as a table or chart, so make sure it \
-returns the rows that best support your answer, with readable column aliases.
+- The user sees one query's result as a chart or table: the last query you ran with \
+show_to_user=true. Use it for the query whose rows best support your answer (readable \
+column aliases, one row per category or time period). Set show_to_user=false for \
+exploratory or side checks, such as counting nulls or peeking at values.
+- For results over time, return one row per period with an ISO date or YYYY-MM label \
+first, sorted ascending, and include empty periods as 0 (e.g. with generate_series) \
+so gaps aren't hidden.
 
 Final answer: a short, direct answer in plain language (a few sentences at most), with the \
 key numbers. Don't paste the SQL or the full table; the user sees those separately.
@@ -58,21 +63,23 @@ def ask(question: str, session: Session, dataset_ids: list[int] | None = None) -
     queries: list[dict] = []
 
     @beta_tool
-    def run_sql(sql: str) -> str:
+    def run_sql(sql: str, show_to_user: bool = True) -> str:
         """Run one read-only PostgreSQL SELECT query against the user's datasets and
         return the result rows as JSON (or an error message to fix and retry).
 
         Args:
             sql: A single SELECT (or WITH ... SELECT) statement.
+            show_to_user: True if this result should be the chart/table shown with your
+                answer; false for exploratory or side-check queries.
         """
         try:
             result = run_readonly_query(sql)
         except (UnsafeQueryError, DBAPIError) as e:
             message = str(getattr(e, "orig", None) or e).strip()
-            queries.append({"sql": sql, "error": message})
+            queries.append({"sql": sql, "error": message, "shown": False})
             return f"ERROR: {message}"
 
-        queries.append({**result, "error": None})
+        queries.append({**result, "error": None, "shown": show_to_user})
         preview = {
             "columns": result["columns"],
             "rows": result["rows"][:ROWS_SHOWN_TO_MODEL],
@@ -103,10 +110,11 @@ def ask(question: str, session: Session, dataset_ids: list[int] | None = None) -
         answer = "I couldn't finish the analysis within the allowed number of steps."
 
     successful = [q for q in queries if q["error"] is None]
+    shown = [q for q in successful if q["shown"]] or successful
     return {
         "question": question,
         "answer": answer,
-        "result": successful[-1] if successful else None,
+        "result": shown[-1] if shown else None,
         "queries": queries,
         "model": final.model,
     }
