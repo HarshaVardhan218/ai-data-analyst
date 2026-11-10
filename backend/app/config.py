@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     db_host: str = "localhost"
     db_port: int = 5432
+    max_upload_mb: int = 50
 
     @property
     def app_rw_url(self) -> str:

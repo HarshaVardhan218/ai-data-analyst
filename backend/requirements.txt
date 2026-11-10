@@ -16,6 +16,7 @@ pydantic-settings==2.15.0
 pydantic_core==2.50.1
 python-dateutil==3.0.0
 python-dotenv==1.2.4
+python-multipart==0.0.33
 PyYAML==6.0.3
 six==1.17.0
 SQLAlchemy==2.1.4

@@ -2,9 +2,10 @@ from fastapi import FastAPI
 from sqlalchemy import text
 
 from app.database.engine import app_engine, analyst_engine
+from app.api.datasets import router as datasets_router
 
 app = FastAPI(title="AI Data Analyst Agent")
-
+app.include_router(datasets_router)
 
 @app.get("/health")
 def health_check():
