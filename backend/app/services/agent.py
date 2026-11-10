@@ -27,6 +27,9 @@ e.g. SELECT ... FROM user_data."sales_2024".
 show_to_user=true. Use it for the query whose rows best support your answer (readable \
 column aliases, one row per category or time period). Set show_to_user=false for \
 exploratory or side checks, such as counting nulls or peeking at values.
+- The shown result is drawn as one chart on one scale, so every value in it should be \
+comparable. Keep totals and denominators (e.g. total row count) out of it and mention \
+them in your answer text instead; use percentages if a share is what matters.
 - Order the shown query's columns as: the label (category or period) first, then the \
 main measure the question is about, then supporting measures, with counts last.
 - For results over time, return one row per period with an ISO date or YYYY-MM label \

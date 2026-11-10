@@ -77,13 +77,20 @@ export function chooseForm(columns, rows) {
     if (numericCols.length <= 3) return { type: "stat", valueCols: numericCols };
     // ...but one row of many numbers (e.g. a count per column) is a comparison:
     // turn the columns into rows and draw bars, so every value is visible.
+    // A row total (total_rows, row_count, n) isn't comparable with the rest and
+    // would squash every other bar, so it's left out and mentioned in a note.
+    const isTotal = (name) => /^(total[_ ]?)?(rows|records|row[_ ]?count|n[_ ]?rows|count|n)$/i.test(name);
+    const totals = numericCols.filter((i) => isTotal(columns[i]));
+    const bars = numericCols.length - totals.length >= 2 ? numericCols.filter((i) => !isTotal(columns[i])) : numericCols;
+    const left = numericCols.filter((i) => !bars.includes(i));
     return {
       type: "bar",
       labelCol: 0,
       valueCol: 1,
       measures: [1],
       columns: ["column", "value"],
-      rows: numericCols.map((i) => [columns[i].replace(/_/g, " "), rows[0][i]]),
+      rows: bars.map((i) => [columns[i].replace(/_/g, " "), rows[0][i]]),
+      note: left.map((i) => `${columns[i].replace(/_/g, " ")}: ${formatValue(rows[0][i])}`).join(" · "),
     };
   }
 
@@ -385,6 +392,7 @@ export function renderChart(container, columns, rows, spec) {
 export function chartNote(columns, rows, spec) {
   columns = spec.columns ?? columns;
   rows = spec.rows ?? rows;
+  if (spec.note) return `Not charted: ${spec.note} (see Table).`;
   if (spec.type === "bar" && rows.length > MAX_BARS) return `Showing the first ${MAX_BARS} of ${rows.length} rows.`;
   return "";
 }
