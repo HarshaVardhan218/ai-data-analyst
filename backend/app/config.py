@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     db_port: int = 5432
     max_upload_mb: int = 50
 
+    # AI agent. Put ANTHROPIC_API_KEY in the repo-root .env.
+    anthropic_api_key: str | None = None
+    agent_model: str = "claude-opus-5-5"
+
     @property
     def app_rw_url(self) -> str:
         return (
