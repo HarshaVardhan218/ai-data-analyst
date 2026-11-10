@@ -23,3 +23,6 @@ data/sample/*.csv
 
 # Exception: keep small hand-made test fixtures
 !data/sample/customers_test.csv
+
+# Personal interview notes (not for the public repo)
+docs/*.docx
