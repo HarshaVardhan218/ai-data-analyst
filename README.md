@@ -126,8 +126,3 @@ docker/                PostgreSQL role and schema setup
 - MCP server exposing the datasets
 - An evaluation set of questions with known answers to measure accuracy
 - Run the whole stack with one `docker compose up`
-
-## Built with AI assistance
-
-Parts of this project were written with an AI coding assistant. I designed, tested and
-debugged it, and can explain every component.
