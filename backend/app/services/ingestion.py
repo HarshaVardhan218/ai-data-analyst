@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import io
 from pathlib import Path
 
 import pandas as pd
@@ -8,6 +7,7 @@ from sqlalchemy import Engine, text
 from sqlalchemy.orm import Session
 
 from app.models.dataset import Dataset
+from app.services.csv_reader import read_csv
 from app.services.loader import load_dataframe
 from app.services.metadata import save_dataset_metadata
 from app.services.profiling import profile_dataframe
@@ -22,7 +22,7 @@ def parse_csv(content: bytes) -> pd.DataFrame:
     if not content.strip():
         raise IngestionError("The uploaded file is empty.")
     try:
-        df = pd.read_csv(io.BytesIO(content))
+        df = read_csv(content)
     except Exception as e:
         raise IngestionError(f"Could not parse the file as CSV: {e}") from e
     if df.empty or len(df.columns) == 0:

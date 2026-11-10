@@ -3,7 +3,8 @@
 // All labels come from user data, so they are only ever set via textContent.
 
 const NS = "http://www.w3.org/2000/svg";
-const DATE_RE = /^\d{4}-\d{2}(-\d{2})?([T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?)?$/;
+// 2024, 2024-03, 2024-03-15, 2024-03-15T10:00:00 (a bare 4-digit label is a year)
+const DATE_RE = /^\d{4}(-\d{2}(-\d{2})?([T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?)?)?$/;
 const MAX_BARS = 20;
 const MAX_TABLE_ROWS = 200;
 
@@ -72,23 +73,49 @@ export function chooseForm(columns, rows) {
   if (!numericCols.length) return { type: "table" };
 
   if (rows.length === 1) {
-    return { type: "stat", valueCols: numericCols.slice(0, 4) };
+    // A few headline numbers read best as big figures...
+    if (numericCols.length <= 3) return { type: "stat", valueCols: numericCols };
+    // ...but one row of many numbers (e.g. a count per column) is a comparison:
+    // turn the columns into rows and draw bars, so every value is visible.
+    return {
+      type: "bar",
+      labelCol: 0,
+      valueCol: 1,
+      measures: [1],
+      columns: ["column", "value"],
+      rows: numericCols.map((i) => [columns[i].replace(/_/g, " "), rows[0][i]]),
+    };
   }
 
   const labelCol = columns.findIndex((_, i) => !numericCols.includes(i));
-  if (labelCol === -1) return { type: "table" };
+  if (labelCol === -1) {
+    // All numeric. A first column like model_year / month / week that counts up
+    // is a time axis, not a measure.
+    const first = rows.map((r) => r[0]);
+    const isPeriod =
+      /(year|month|week|day|quarter|period|hour)/i.test(columns[0]) &&
+      numericCols.length >= 2 &&
+      rows.length >= 3 &&
+      first.every((v, i) => Number.isInteger(v) && (i === 0 || v > first[i - 1]));
+    if (!isPeriod) return { type: "table" };
+    const measures = numericCols.filter((i) => i !== 0);
+    return { type: "line", labelCol: 0, valueCol: measures[0], measures };
+  }
 
-  // Prefer a value column that isn't an identifier.
-  const valueCol =
-    numericCols.find((i) => !/(^id$|_id$)/i.test(columns[i])) ?? numericCols[0];
-  const otherNumeric = numericCols.filter((i) => i !== valueCol);
+  // Measures to offer, identifiers excluded; the first one is charted by default.
+  const nonId = numericCols.filter((i) => !/(^id$|_id$)/i.test(columns[i]));
+  const measures = nonId.length ? nonId : numericCols;
+  const valueCol = measures[0];
 
   const labels = rows.map((r) => r[labelCol]);
-  const isTime =
-    rows.length >= 3 && labels.every((l) => l === null || (typeof l === "string" && DATE_RE.test(l)));
+  // A bare 4-digit label only counts as a year if it's in a plausible range,
+  // so codes like "4521" stay categories.
+  const isDateLabel = (l) =>
+    typeof l === "string" && DATE_RE.test(l) && (!/^\d{4}$/.test(l) || (+l >= 1800 && +l <= 2100));
+  const isTime = rows.length >= 3 && labels.every((l) => l === null || isDateLabel(l));
 
-  if (isTime) return { type: "line", labelCol, valueCol, otherNumeric };
-  if (rows.length <= 60) return { type: "bar", labelCol, valueCol, otherNumeric };
+  if (isTime) return { type: "line", labelCol, valueCol, measures };
+  if (rows.length <= 60) return { type: "bar", labelCol, valueCol, measures };
   return { type: "table" };
 }
 
@@ -347,19 +374,19 @@ function drawStats(container, rows, spec, columns) {
 export function renderChart(container, columns, rows, spec) {
   container.replaceChildren();
   container.classList.add("chart");
+  // Some forms reshape the data first (see chooseForm).
+  columns = spec.columns ?? columns;
+  rows = spec.rows ?? rows;
   if (spec.type === "bar") drawBars(container, rows, spec, columns);
   else if (spec.type === "line") drawLine(container, rows, spec, columns);
   else if (spec.type === "stat") drawStats(container, rows, spec, columns);
 }
 
 export function chartNote(columns, rows, spec) {
-  const notes = [];
-  if (spec.type === "bar" && rows.length > MAX_BARS) notes.push(`Showing the first ${MAX_BARS} of ${rows.length} rows.`);
-  if ((spec.type === "bar" || spec.type === "line") && spec.otherNumeric.length) {
-    const others = spec.otherNumeric.map((i) => columns[i]).join(", ");
-    notes.push(`Chart shows ${columns[spec.valueCol]}; ${others} ${spec.otherNumeric.length > 1 ? "are" : "is"} in the table.`);
-  }
-  return notes.join(" ");
+  columns = spec.columns ?? columns;
+  rows = spec.rows ?? rows;
+  if (spec.type === "bar" && rows.length > MAX_BARS) return `Showing the first ${MAX_BARS} of ${rows.length} rows.`;
+  return "";
 }
 
 // ---- Table ---------------------------------------------------------------

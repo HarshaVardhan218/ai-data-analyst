@@ -12,7 +12,7 @@ async function api(path, options = {}) {
   } catch {
     throw new Error("Can't reach the server. Is uvicorn running?");
   }
-  const body = await res.json().catch(() => null);
+  const body = res.status === 204 ? null : await res.json().catch(() => null);
   if (!res.ok) {
     const detail = body?.detail;
     const message = Array.isArray(detail) ? detail.map((d) => d.msg).join("; ") : detail;
@@ -101,22 +101,48 @@ function renderDatasets() {
     const meta = el("div", "dataset-meta", `${formatValue(ds.row_count)} rows · ${ds.column_count} columns`);
     info.append(name, meta);
 
+    const actions = el("div", "item-actions");
     const view = el("button", "link-button", "View");
     view.type = "button";
     view.addEventListener("click", () => openDataset(ds));
+    const del = el("button", "link-button danger", "Delete");
+    del.type = "button";
+    del.setAttribute("aria-label", `Delete ${ds.table_name}`);
+    del.addEventListener("click", () => deleteDataset(ds));
+    actions.append(view, del);
 
-    li.append(box, info, view);
+    li.append(box, info, actions);
     list.appendChild(li);
   }
 }
 
+async function deleteDataset(ds) {
+  const ok = confirm(
+    `Delete "${ds.table_name}"?\n\nThis permanently removes its table and ${formatValue(ds.row_count)} rows ` +
+      `from the database. Your original CSV file is not affected.`,
+  );
+  if (!ok) return;
+  const status = $("upload-status");
+  try {
+    await api(`/datasets/${ds.id}`, { method: "DELETE" });
+    state.selected.delete(ds.id);
+    setStatus(status, `Deleted ${ds.table_name}.`, "ok");
+  } catch (e) {
+    setStatus(status, e.message, "error");
+  }
+  await loadDatasets();
+}
+
 function renderScope() {
-  const n = state.selected.size;
-  $("scope").textContent = !state.datasets.length
+  const scoped = scopedDatasets();
+  const total = state.datasets.length;
+  $("scope").textContent = !total
     ? "No datasets yet"
-    : n === 0
-      ? `Asking about all ${state.datasets.length} dataset${state.datasets.length > 1 ? "s" : ""}`
-      : `Asking about ${n} selected dataset${n > 1 ? "s" : ""}`;
+    : scoped.length === 1
+      ? `Asking about ${scoped[0].table_name}`
+      : state.selected.size
+        ? `Asking about ${scoped.length} selected datasets`
+        : `Asking about all ${total} datasets`;
 }
 
 function scopedDatasets() {
@@ -135,7 +161,7 @@ function renderSuggestions() {
   // A good "group by" column: categorical, or the text column with the fewest distinct values.
   const category = cols.find((c) => c.inferred_role === "categorical") ||
     cols
-      .filter((c) => c.inferred_role === "text" && c.unique_count > 1 && c.unique_count < ds.row_count)
+      .filter((c) => c.inferred_role === "text" && c.unique_count > 1 && c.unique_count <= 30 && c.unique_count < ds.row_count)
       .sort((a, b) => a.unique_count - b.unique_count)[0];
   const date = cols.find((c) => c.inferred_role === "datetime");
 
@@ -261,14 +287,36 @@ function renderResult(card, result) {
 
   const showChart = () => {
     const chartBox = el("div");
-    view.replaceChildren(chartBox);
     let lastWidth = 0;
-    chartBox._redraw = () => {
-      if (chartBox.clientWidth === lastWidth) return;
+    chartBox._redraw = (force = false) => {
+      if (!force && chartBox.clientWidth === lastWidth) return;
       lastWidth = chartBox.clientWidth;
       renderChart(chartBox, columns, rows, spec);
     };
-    chartBox._redraw();
+
+    // Several measures (e.g. avg_mpg, avg_horsepower): let the reader pick one.
+    // One chart, one axis; the table still has every column.
+    const measures = spec.measures ?? [];
+    if (measures.length > 1) {
+      const picker = el("label", "measure-picker", "Showing ");
+      const select = document.createElement("select");
+      for (const i of measures) {
+        const option = el("option", null, columns[i]);
+        option.value = String(i);
+        option.selected = i === spec.valueCol;
+        select.appendChild(option);
+      }
+      select.addEventListener("change", () => {
+        spec.valueCol = Number(select.value);
+        chartBox._redraw(true);
+      });
+      picker.appendChild(select);
+      view.replaceChildren(picker, chartBox);
+    } else {
+      view.replaceChildren(chartBox);
+    }
+
+    chartBox._redraw(true);
     resizeObserver.observe(chartBox);
     note.hidden = !note.textContent;
   };

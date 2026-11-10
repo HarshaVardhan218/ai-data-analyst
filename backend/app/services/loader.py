@@ -3,6 +3,8 @@ from __future__ import annotations
 import pandas as pd
 from sqlalchemy import Engine
 
+from app.services.profiling import parse_dates
+
 
 def load_dataframe(
     df: pd.DataFrame,
@@ -20,9 +22,7 @@ def load_dataframe(
     for col in profile["columns"]:
         if col["inferred_role"] == "datetime":
             sql_name = name_map[col["name"]]
-            data[sql_name] = pd.to_datetime(
-                data[sql_name], errors="coerce", format="mixed"
-            )
+            data[sql_name] = parse_dates(data[sql_name])
 
     data.to_sql(
         name=table_name,

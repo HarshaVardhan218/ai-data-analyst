@@ -27,6 +27,8 @@ e.g. SELECT ... FROM user_data."sales_2024".
 show_to_user=true. Use it for the query whose rows best support your answer (readable \
 column aliases, one row per category or time period). Set show_to_user=false for \
 exploratory or side checks, such as counting nulls or peeking at values.
+- Order the shown query's columns as: the label (category or period) first, then the \
+main measure the question is about, then supporting measures, with counts last.
 - For results over time, return one row per period with an ISO date or YYYY-MM label \
 first, sorted ascending, and include empty periods as 0 (e.g. with generate_series) \
 so gaps aren't hidden.

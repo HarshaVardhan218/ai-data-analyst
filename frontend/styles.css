@@ -152,6 +152,9 @@ code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); p
   color: var(--accent); font-size: 13px; cursor: pointer;
 }
 .link-button:hover { background: var(--series-1-wash); }
+.link-button.danger { color: var(--muted); }
+.link-button.danger:hover { color: var(--critical); background: rgba(208, 59, 59, 0.08); }
+.item-actions { display: flex; gap: 2px; }
 .empty-list { font-size: 13px; color: var(--muted); padding: 8px 0; }
 
 /* ---- Ask box --------------------------------------------------------- */
@@ -200,6 +203,11 @@ code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); p
 }
 .segmented button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); font-weight: 600; }
 .note { font-size: 12px; color: var(--muted); margin: 0; }
+.measure-picker { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); margin-bottom: 8px; }
+.measure-picker select {
+  font-size: 13px; padding: 4px 8px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+}
 
 details.sql { border-top: 1px solid var(--border); padding-top: 10px; }
 details.sql summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -44,3 +45,17 @@ def get_dataset(dataset_id: int, db: Session = Depends(get_db)):
     if dataset is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"Dataset {dataset_id} not found.")
     return dataset
+
+
+@router.delete("/{dataset_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_dataset(dataset_id: int, db: Session = Depends(get_db)):
+    dataset = db.get(Dataset, dataset_id)
+    if dataset is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"Dataset {dataset_id} not found.")
+
+    # table_name came from our own sanitizer, so quoting it is safe.
+    with app_engine.begin() as conn:
+        conn.execute(text(f'DROP TABLE IF EXISTS user_data."{dataset.table_name}"'))
+    db.delete(dataset)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
