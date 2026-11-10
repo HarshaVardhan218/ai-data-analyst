@@ -7,8 +7,7 @@ An LLM agent (Claude) writes SQL, runs it through a tool against PostgreSQL, rea
 results or errors, retries when needed, and explains the answer. It connects as a
 **read-only database role**, so it can never change or delete your data.
 
-<!-- Add a screenshot: save it as docs/screenshot.png and uncomment the line below. -->
-<!-- ![Dashboard](docs/screenshot.png) -->
+![Dashboard](docs/screenshot.png)
 
 ## Features
 
